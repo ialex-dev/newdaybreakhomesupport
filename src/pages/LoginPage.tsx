@@ -1,5 +1,5 @@
 // src/LoginPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sunrise, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { SERVER_URL } from './config';
 
@@ -19,6 +19,17 @@ export default function LoginPage({ setCurrentPage, setIsAdminAuthenticated }: L
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // 🧠 Auto-login if adminToken already exists in localStorage
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      if (typeof setIsAdminAuthenticated === 'function') {
+        setIsAdminAuthenticated(true);
+      }
+      setCurrentPage('admin-dashboard');
+    }
+  }, [setCurrentPage, setIsAdminAuthenticated]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +51,7 @@ export default function LoginPage({ setCurrentPage, setIsAdminAuthenticated }: L
         return;
       }
 
-      // require admin role
+      // ✅ Require admin role
       const role = data?.user?.role;
       if (role !== 'admin') {
         setError('Only administrators can log in here.');
@@ -48,16 +59,19 @@ export default function LoginPage({ setCurrentPage, setIsAdminAuthenticated }: L
         return;
       }
 
-      // store token under the canonical key `adminToken`
+      // ✅ Store token persistently
       localStorage.setItem('adminToken', data.token);
 
-      // update parent auth state if provided
+      // ✅ Update auth state if available
       if (typeof setIsAdminAuthenticated === 'function') {
         setIsAdminAuthenticated(true);
       }
 
-      // redirect to admin dashboard
+      // ✅ Go to dashboard and refresh automatically
       setCurrentPage('admin-dashboard');
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
     } catch (err) {
       console.error('Login error', err);
       setError('Network error. Please try again.');
@@ -69,48 +83,83 @@ export default function LoginPage({ setCurrentPage, setIsAdminAuthenticated }: L
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 via-white to-yellow-50 py-20">
       <div className="max-w-md w-full space-y-8">
+        {/* Header */}
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-3 cursor-pointer mb-6" onClick={() => setCurrentPage('home')}>
+          <div
+            className="flex items-center justify-center space-x-3 cursor-pointer mb-6"
+            onClick={() => setCurrentPage('home')}
+          >
             <div className="p-3 rounded-full">
               <div>
-  <img
-    src="https://rising-sun.org/wp-content/uploads/2025/07/fotrs-logo-transparent.webp"
-    alt="Caregiver with elderly client"
-    className="w-[60px] h-auto object-contain block"
-  />
-</div>
+                <img
+                  src="https://rising-sun.org/wp-content/uploads/2025/07/fotrs-logo-transparent.webp"
+                  alt="Caregiver with elderly client"
+                  className="w-[60px] h-auto object-contain block"
+                />
+              </div>
             </div>
-            <div><h1 className=" text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-yellow-500 text-2xl font-bold">New Daybreak</h1><p className="text-sm text-yellow-600">Home Support</p></div>
+            <div>
+              <h1 className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-yellow-500 text-2xl font-bold">
+                New Daybreak
+              </h1>
+              <p className="text-sm text-yellow-600">Home Support</p>
+            </div>
           </div>
           <h2 className="text-2xl font-bold">Admin Login</h2>
         </div>
 
+        {/* Form */}
         <div className="bg-white p-6 rounded border border-blue-300 shadow">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <div className="text-red-600 bg-red-50 p-3 rounded flex items-center"><AlertCircle className="mr-2" />{error}</div>}
+            {error && (
+              <div className="text-red-600 bg-red-50 p-3 rounded flex items-center">
+                <AlertCircle className="mr-2" /> {error}
+              </div>
+            )}
 
             <div>
               <label className="text-sm">Email</label>
-              <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-2 border rounded" />
+              <input
+                required
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full p-2 border rounded"
+              />
             </div>
 
             <div>
               <label className="text-sm">Password</label>
               <div className="relative">
-                <input required type={showPassword ? 'text' : 'password'} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full p-2 border rounded pr-10" />
-                <button type="button" onClick={() => setShowPassword(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2">
+                <input
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full p-2 border rounded pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                >
                   {showPassword ? <EyeOff /> : <Eye />}
                 </button>
               </div>
             </div>
 
-            <button disabled={isLoading} className="w-full bg-yellow-600 text-white py-2 rounded">
+            <button
+              disabled={isLoading}
+              className="w-full bg-yellow-600 text-white py-2 rounded hover:bg-yellow-700 transition"
+            >
               {isLoading ? 'Logging in...' : 'Login as Admin'}
             </button>
           </form>
 
           <div className="text-center mt-3">
-            <button onClick={() => setCurrentPage('home')} className="text-blue-600">← Back to Website</button>
+            <button onClick={() => setCurrentPage('home')} className="text-blue-600">
+              ← Back to Website
+            </button>
           </div>
         </div>
       </div>
