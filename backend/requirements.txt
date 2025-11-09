@@ -4,7 +4,7 @@ appdirs==1.4.4
 asgiref==3.7.2
 attrs==23.2.0
 Babel==2.10.3
-bcc==0.29.1
+bcc==*
 bcrypt==5.0.0
 beautifulsoup4==4.13.3
 blinker==1.9.0
