@@ -12,6 +12,7 @@ werkzeug = "==2.3.7"
 flask-migrate = "*"
 flask-bcrypt = "*"
 flask-jwt-extended = "*"
+gunicorn = "*"
 
 [dev-packages]
 
